@@ -1,0 +1,35 @@
+After cloning the git repo of the paper, some modification should be made to the codes which are as follows:
+
+In datasets.py in init function this line should be modifies as given:
+self.data = np.load(path + '/css_toy_dataset_novel2_small.dup.npy', allow_pickle=True, encoding='latin1').item()
+
+
+
+In img_text_composition.py:
+labels = list(range(mod_img1.shape[0])) + list(range(img2.shape[0]))
+
+
+In torch_functions.py, TripletLoss need to modified as follows: 
+import torch
+import torch.nn.functional as F
+
+class TripletLoss(torch.nn.Module):
+    """Class for the triplet loss."""
+    def __init__(self):
+        super(TripletLoss, self).__init__()
+
+    def forward(self, features, triplets):
+        distances = pairwise_distances(features)
+        losses = []
+        for i, j, k in triplets:
+            anchor = features[i]
+            positive = features[j]
+            negative = features[k]
+            loss = self.triplet_loss(anchor, positive, negative, distances[i, j], distances[i, k])
+            losses.append(loss)
+        return torch.stack(losses).mean()
+
+    def triplet_loss(self, anchor, positive, negative, dist_pos, dist_neg, margin=1.0):
+        loss = F.relu(dist_pos - dist_neg + margin)
+        return loss
+
